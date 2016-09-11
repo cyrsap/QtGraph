@@ -41,7 +41,7 @@ private:
     qreal MaxY;
     qreal MinY;
 
-    void TellWrongParam(QString aMesg );
+    void ShowMessage(QString aMesg );
     void SetControlAccess( bool aAccess );
     virtual void mousePressEvent(QMouseEvent *event);
     void setFinishedState();
