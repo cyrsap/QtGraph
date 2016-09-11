@@ -11,6 +11,7 @@ T_ValuesFrame::T_ValuesFrame(QWidget *parent) :
     setWindowFlags( Qt::Dialog );
     setWindowModality( Qt::ApplicationModal );
     setFixedSize( 239, 300 );
+    setWindowTitle( QString("") );
 
     // настройка таблицы
     ui->tableWidget->setColumnCount( 2 );
@@ -104,6 +105,7 @@ void T_ValuesFrame::LoadFromFile(QString aFileName)
 {
     T_FileSaveStruct FileSaveStruct;
     QFile file( aFileName );
+    CoordVec.clear();
     if ( !file.open( QIODevice::ReadOnly ) ) {
         //todo
         return;

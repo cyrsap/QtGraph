@@ -30,8 +30,10 @@ MainWindow::MainWindow(QWidget *parent) :
     Paused = false;
     IsCalcOnline = false;
     ui->graphicsView->setScene( Scene );
+    ui->graphicsView->scale( 1, -1 );
     qRegisterMetaType<T_Coord>( "T_Coord" );
     ValuesFrame = new T_ValuesFrame;
+    setWindowTitle( QString("") );
 
     QObject::connect( this,       SIGNAL(runPlot(T_FuncParams)), Calculator, SLOT(LaunchCalc(T_FuncParams)) );
     QObject::connect( Calculator, SIGNAL(SendCoord(T_Coord)), this, SLOT(onSendCoord(T_Coord)) );
@@ -180,10 +182,12 @@ void MainWindow::DrawFromVec(const QVector<T_Coord> &aCoordVec)
         ShowMessage( "Received empty Vector in DrawFromVec, must not exec" );
         return;
     }
-    PrevCoord = aCoordVec.front();
+    PrevCoord = aCoordVec[ 0 ];
     MaxY = MAX_Y_DEFAULT;
     MinY = MIN_Y_DEFAULT;
     Scene->clear();
+//    return;
+//    DrawCoord();
 
     if ( aCoordVec.size() < 2 ) {
         return;
@@ -191,9 +195,11 @@ void MainWindow::DrawFromVec(const QVector<T_Coord> &aCoordVec)
     QPen pen(Qt::red);
     for ( int i = 1; i < aCoordVec.size(); i++ ) {
         Scene->addLine( PrevCoord.x, PrevCoord.y, aCoordVec[ i ].x, aCoordVec[ i ].y, pen );
-        DrawCoord();
+        MaxY = qMax( aCoordVec[ i ].y, MaxY );
+        MinY = qMin( aCoordVec[ i ].y, MinY );
         PrevCoord = aCoordVec[ i ];
     }
+    DrawCoord();
 }
 
 void MainWindow::DrawCoord()
@@ -274,6 +280,12 @@ void MainWindow::onRecvLoadedData(T_FuncParams &aParams, QVector<T_Coord> &aCoor
         setPausedState();
     }
     DrawFromVec( aCoordVec );
+    // Вычисление процента для кнопки Progress
+    int Percent = ( PrevCoord.x - ui->lineEditFrom->text().toDouble() ) * 100 /
+            ( ui->lineEditTo->text().toDouble() - ui->lineEditFrom->text().toDouble());
+    if ( Percent != 100 ) {
+        ui->pushButtonStart->setText( QString( "Progress (%1%)" ).arg( Percent )  );
+    }
 
     // Перенаправление данных в калькулятор
     emit SendLoadedDataToCalculator( aParams, aCoordVec );
