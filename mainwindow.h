@@ -38,12 +38,17 @@ private:
     bool Paused;            // Флаг того, что вычисления приостановлены
     bool IsCalcOnline;      // Флаг того, что вычисления ведутся (могут быть приостановлены)
 
-    void TellWrongParam( QString &aMesg );
+    qreal MaxY;
+    qreal MinY;
+
+    void TellWrongParam(QString aMesg );
     void SetControlAccess( bool aAccess );
     virtual void mousePressEvent(QMouseEvent *event);
     void setFinishedState();
     void setPausedState();
     void DrawFromVec( const QVector<T_Coord> &aCoordVec );
+    void DrawCoord();
+    void resizeEvent( QResizeEvent * event );
 signals:
     void runPlot( T_FuncParams aParams );
     void Pause();

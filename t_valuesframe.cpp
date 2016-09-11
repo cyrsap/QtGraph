@@ -45,6 +45,13 @@ void T_ValuesFrame::SetParamsAndVec( T_FuncParams aParams, QVector<T_Coord> aVec
 
         CoordVec.push_back( aVec[ i ] );
     }
+    if ( ( aParams.FuncIdx > 3 ) || ( aParams.FuncIdx < 0 ) ) {
+        ui->label->setText( QString( "Nothing to show" ) );
+    }
+    else {
+        ui->label->setText( FuncNames[ aParams.FuncIdx ].c_str() );
+    }
+
 }
 
 void T_ValuesFrame::on_pushButtonSave_clicked()

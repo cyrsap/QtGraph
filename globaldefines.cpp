@@ -1,12 +1,14 @@
 #include "globaldefines.h"
-#include <qmath.h>
+#include <math.h>
 
 QVector< T_Function > FunctionsVec;
 
-qreal SinFunc( qreal aA, qreal aB, qreal aC, qreal aX )
-{
-    return qSin( aX );
-}
+const std::string FuncNames[] = {
+    "f(x) = A*(x*x) + B*x + C",
+    "f(x) = A * sin(x) + B * cos( C*x )",
+    "f(x) = A*log( B*x )",
+    "f(x) = A / ( sin(x*x) * B )"
+};
 
 qreal FirstFunc( qreal aA, qreal aB, qreal aC, qreal aX )
 {
@@ -15,17 +17,17 @@ qreal FirstFunc( qreal aA, qreal aB, qreal aC, qreal aX )
 
 qreal SecondFunc( qreal aA, qreal aB, qreal aC, qreal aX )
 {
-    return aA * qSin( aX ) + aB * qCos( aC * aX );
+    return aA * sin( aX ) + aB * cos( aC * aX );
 }
 
 qreal ThirdFunc( qreal aA, qreal aB, qreal aC, qreal aX )
 {
     (void)aC;
-    return aA * qLn( aB * aX );   // в задании не указано, какой логарифм, пусть будет натуральный
+    return aA * log( aB * aX );   // в задании не указано, какой логарифм, пусть будет натуральный
 }
 
 qreal FourthFunc( qreal aA, qreal aB, qreal aC, qreal aX )
 {
     (void)aC;
-    return aA / ( qSin( aX * aX ) * aB );
+    return aA / ( sin( aX * aX ) * aB );
 }

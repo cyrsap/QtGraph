@@ -2,22 +2,28 @@
 #include "ui_mainwindow.h"
 #include "globaldefines.h"
 #include <QMetaType>
+#include <QMessageBox>
+
+#define MAX_Y_DEFAULT 1
+#define MIN_Y_DEFAULT -1
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    ui->comboBoxFunction->addItem( "f(x) = sin(x)" );
-    ui->comboBoxFunction->addItem( "f(x) = A*(x*x) + B*x + C" );
-    ui->comboBoxFunction->addItem( "f(x) = A * sin(x) + B * cos( C*x )" );
-    ui->comboBoxFunction->addItem( "f(x) = A*log( B*x )" );
-    ui->comboBoxFunction->addItem( "f(x) = A / ( sin(x*x) * B )" );
+    // Добавление функций в комбобокс
+    ui->comboBoxFunction->addItem( FuncNames[ 0 ].c_str() );
+    ui->comboBoxFunction->addItem( FuncNames[ 1 ].c_str() );
+    ui->comboBoxFunction->addItem( FuncNames[ 2 ].c_str() );
+    ui->comboBoxFunction->addItem( FuncNames[ 3 ].c_str() );
 
+    // добавление функций в общий список
     FunctionsVec.push_back( FirstFunc );
     FunctionsVec.push_back( SecondFunc );
     FunctionsVec.push_back( ThirdFunc );
     FunctionsVec.push_back( FourthFunc );
+
     Calculator = new T_Calculator;
     Scene = new QGraphicsScene;
     FirstSendCoord = true;
@@ -62,27 +68,52 @@ void MainWindow::on_pushButtonStart_clicked()
     bool Ok;
     QString Msg;
     Params.A = ui->lineEditA->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad A param") );
+        return;
+    }
     Params.B = ui->lineEditB->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad B param") );
+        return;
+    }
     Params.C = ui->lineEditC->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad C param") );
+        return;
+    }
     Params.From = ui->lineEditFrom->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad From param") );
+        return;
+    }
     Params.To = ui->lineEditTo->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad To param") );
+        return;
+    }
     Params.Step = ui->lineEditStep->text().toDouble( &Ok );
-    if ( !Ok ) TellWrongParam( Msg );
+    if ( !Ok ) {
+        ShowMessage( QString("Bad Step param") );
+        return;
+    }
 
     if ( Params.To - Params.From <= 0 ) {
-        TellWrongParam( Msg );
-    }
-    if ( Params.To - Params.From < Params.Step ) {
-        TellWrongParam( Msg );
+        ShowMessage( QString("To must be greater than From") );
+        return;
     }
 
     Params.FuncIdx = ui->comboBoxFunction->currentIndex();
+
+    if ( Params.FuncIdx == 2 ) {   // Функция с логарифмом
+        if ( Params.From < 0 || Params.To < 0 ) {
+            ShowMessage( QString("Logarithmic function must accept only positive X arguments") );
+            return;
+        }
+    }
     Scene->clear();
+    MinY = MIN_Y_DEFAULT;
+    MaxY = MAX_Y_DEFAULT;
     FirstSendCoord = true;
 
     IsCalcOnline = true;
@@ -91,9 +122,11 @@ void MainWindow::on_pushButtonStart_clicked()
     emit runPlot( Params );
 }
 
-void MainWindow::TellWrongParam(QString &aMesg)
+void MainWindow::ShowMessage(QString aMesg)
 {
-
+    QMessageBox Msg(this);
+    Msg.setText( aMesg );
+    Msg.exec();
 }
 
 void MainWindow::SetControlAccess(bool aAccess)
@@ -144,10 +177,12 @@ void MainWindow::setPausedState()
 void MainWindow::DrawFromVec(const QVector<T_Coord> &aCoordVec)
 {
     if ( !aCoordVec.size() ) {
-        //todo
+        ShowMessage( "Received empty Vector in DrawFromVec, must not exec" );
         return;
     }
     PrevCoord = aCoordVec.front();
+    MaxY = MAX_Y_DEFAULT;
+    MinY = MIN_Y_DEFAULT;
     Scene->clear();
 
     if ( aCoordVec.size() < 2 ) {
@@ -156,20 +191,50 @@ void MainWindow::DrawFromVec(const QVector<T_Coord> &aCoordVec)
     QPen pen(Qt::red);
     for ( int i = 1; i < aCoordVec.size(); i++ ) {
         Scene->addLine( PrevCoord.x, PrevCoord.y, aCoordVec[ i ].x, aCoordVec[ i ].y, pen );
+        DrawCoord();
         PrevCoord = aCoordVec[ i ];
     }
+}
+
+void MainWindow::DrawCoord()
+{
+    qreal MinX = ui->lineEditFrom->text().toDouble();
+    qreal MaxX = ui->lineEditTo->text().toDouble();
+    if ( MinX > -1 ) {
+        MinX = -1;
+    }
+    if ( MaxX < 1 ) {
+        MaxX = 1;
+    }
+
+    Scene->addLine( MinX, 0, MaxX, 0 );
+    Scene->addLine( 0, MinY, 0, MaxY );
+    Scene->setSceneRect( MinX, MinY, MaxX-MinX, MaxY-MinY );
+    ui->graphicsView->fitInView( Scene->sceneRect() );
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    (void)event;
+    ui->graphicsView->fitInView( Scene->sceneRect() );
 }
 
 void MainWindow::onSendCoord(T_Coord aCoord)
 {
     QPen pen(Qt::red);
+
     if ( FirstSendCoord ) {
         PrevCoord = aCoord;
         FirstSendCoord = false;
+        MaxY = MAX_Y_DEFAULT;
+        MinY = MIN_Y_DEFAULT;
         return;
     }
 
     Scene->addLine( PrevCoord.x, PrevCoord.y, aCoord.x, aCoord.y, pen );
+    MinY = qMin( MinY, PrevCoord.y );
+    MaxY = qMax( MaxY, PrevCoord.y );
+    DrawCoord();
     PrevCoord = aCoord;
 }
 

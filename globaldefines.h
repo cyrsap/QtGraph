@@ -24,7 +24,8 @@ typedef struct {
 
 extern QVector< T_Function > FunctionsVec;
 
-qreal SinFunc( qreal aA, qreal aB, qreal aC, qreal aX );
+extern const std::string FuncNames[];
+
 qreal FirstFunc( qreal aA, qreal aB, qreal aC, qreal aX );
 qreal SecondFunc( qreal aA, qreal aB, qreal aC, qreal aX );
 qreal ThirdFunc( qreal aA, qreal aB, qreal aC, qreal aX );
